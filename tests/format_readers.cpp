@@ -107,6 +107,27 @@ void Models() {
 }
 
 void Motions() {
+    std::array<std::byte, 40> bank{};
+    MotnBankHeader bankHeader{.sequenceTableOffset = 24, .sequenceNameOffset = 24, .sequenceDataOffset = 32, .attributes = 0x1003, .fileSize = 40};
+    Put(bank, 0, bankHeader);
+    Put<std::uint32_t>(bank, sizeof(MotnBankHeader), 0x1000);
+    Put<std::uint32_t>(bank, 24, 32);
+    Put<std::uint32_t>(bank, 28, 36);
+    std::memcpy(bank.data() + 32, "one\0two", 8);
+    MotnBankRange range;
+    Require(ReadMotnBankRange(bank, bankHeader, range) && range.firstId == 0x1001 && range.count == 2);
+    std::string_view name;
+    Require(ReadMotnName(bank, bankHeader, 0, name) && name == "one");
+    Require(ReadMotnName(bank, bankHeader, 1, name) && name == "two");
+    Require(!ReadMotnBankRange(Bytes(bank).first(23), bankHeader, range) && !range.firstId && !range.count);
+    Require(!ReadMotnBankRange(Bytes(bank).first(31), bankHeader, range));
+    Put<std::uint32_t>(bank, sizeof(MotnBankHeader), 0x1003);
+    Require(!ReadMotnBankRange(bank, bankHeader, range));
+    Put<std::uint32_t>(bank, sizeof(MotnBankHeader), 0x1002);
+    Require(ReadMotnBankRange(bank, bankHeader, range) && range.firstId == 0x1003 && !range.count);
+    bankHeader.attributes = 0xffffffff;
+    Require(!ReadMotnBankRange(bank, bankHeader, range));
+
     Require(std::bit_cast<std::uint32_t>(DecodeMotnFloat(0)) == 0);
     Require(DecodeMotnFloat(0x3c00) == 1.0f && DecodeMotnFloat(0xbc00) == -1.0f);
     for (std::uint32_t value = 0; value <= 65535; ++value)

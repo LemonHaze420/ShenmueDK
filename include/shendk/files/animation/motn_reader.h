@@ -13,6 +13,10 @@ struct MotnBankHeader {
     std::uint32_t attributes;
     std::uint32_t fileSize;
 };
+struct MotnBankRange {
+    std::uint32_t firstId;
+    std::uint32_t count;
+};
 struct S1MotnHeader {
     std::uint16_t attribute;
     std::uint16_t sourceRig;
@@ -55,6 +59,7 @@ struct S2MotnTuple {
 static_assert(sizeof(MotnBankHeader) == 0x14 && sizeof(S1MotnHeader) == 0x0c && sizeof(S2MotnHeader) == 8);
 
 bool ReadMotnBankHeader(Bytes bytes, MotnBankHeader &header);
+bool ReadMotnBankRange(Bytes bytes, const MotnBankHeader &header, MotnBankRange &range);
 bool ReadMotnPayload(Bytes bytes, const MotnBankHeader &header, std::uint32_t index, bool metadata, Bytes &payload);
 bool ReadMotnName(Bytes bytes, const MotnBankHeader &header, std::uint32_t index, std::string_view &name);
 float DecodeMotnFloat(std::uint16_t value);

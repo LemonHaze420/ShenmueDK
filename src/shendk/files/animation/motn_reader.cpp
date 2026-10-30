@@ -18,6 +18,18 @@ bool ReadMotnBankHeader(Bytes bytes, MotnBankHeader &header) {
         Contains(bytes, header.sequenceNameOffset, 0) && Contains(bytes, header.sequenceDataOffset, 0);
 }
 
+bool ReadMotnBankRange(Bytes bytes, const MotnBankHeader &header, MotnBankRange &range) {
+    range = {};
+    std::uint32_t first;
+    if (!Read(bytes, sizeof(MotnBankHeader), first) || header.attributes <= first)
+        return false;
+    const std::uint32_t count = header.attributes - first - 1;
+    if (!Contains(bytes, header.sequenceNameOffset, static_cast<std::uint64_t>(count) * sizeof(std::uint32_t)))
+        return false;
+    range = {.firstId = first + 1, .count = count};
+    return true;
+}
+
 bool ReadMotnPayload(Bytes bytes, const MotnBankHeader &header, std::uint32_t index, bool metadata, Bytes &payload) {
     payload = {};
     std::uint32_t offset;
